@@ -1,6 +1,6 @@
 """
-Live Training Telemetry Board
-Real-time monitoring of YOLO11 fine-tuning on NVIDIA RTX 3050 Ti:
+Training Telementry
+Real-time GPU hardware telemetry and training loss curves.
 - Epoch progress and completion percentage
 - ETA (Estimated Time Remaining) and Finish Time calculation
 - Live GPU VRAM, Temperature, Power, and Utilization telemetry
@@ -27,7 +27,7 @@ import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 
-st.set_page_config(page_title="Live Training Telemetry", layout="wide")
+st.set_page_config(page_title="Training Telementry", layout="wide")
 
 from theme import apply_theme, LOSS_TRAIN, LOSS_VAL, PALETTE
 apply_theme()
@@ -60,24 +60,14 @@ def get_gpu_telemetry():
     except Exception:
         return None
 
-st.title("Live Training Telemetry & ETA Board")
-st.write("Real-time GPU hardware telemetry, training loss curves, and progress tracking.")
+st.title("Training Telementry")
+st.write("Real-time GPU hardware telemetry and training loss curves.")
 st.divider()
-
-# Auto-refresh controller
-col_hdr1, col_hdr2 = st.columns([3, 1])
-with col_hdr2:
-    auto_refresh = st.toggle("Auto-Refresh (every 5s)", value=True)
-    if st.button("Refresh Now", use_container_width=True):
-        st.rerun()
 
 results_path = find_results_csv()
 
 if not results_path or not results_path.exists():
     st.warning("Training log results.csv not detected yet. Model is initializing CUDA tensors...")
-    if auto_refresh:
-        time.sleep(3)
-        st.rerun()
 else:
     # 1. Parse Training Results
     try:
@@ -227,8 +217,3 @@ else:
 
     except Exception as e:
         st.error(f"Error parsing live telemetry data: {e}")
-
-    # Auto refresh trigger
-    if auto_refresh:
-        time.sleep(5)
-        st.rerun()
