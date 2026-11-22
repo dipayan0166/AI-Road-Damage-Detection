@@ -2,28 +2,35 @@
 Single Image Inspection Studio
 Upload individual road photos, adjust IPCV filters (CLAHE),
 view detections side-by-side, inspect defect crops, and generate audit certificates.
+Asphalt Ochre (Dark) Theme Implementation
 """
 
 import sys
 from pathlib import Path
 
-# Add project root to path
+# Add project root and app dir to path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+APP_DIR = Path(__file__).resolve().parent.parent
+if str(APP_DIR) not in sys.path:
+    sys.path.insert(0, str(APP_DIR))
 
 import streamlit as st
 import cv2
 import numpy as np
 from PIL import Image
 
+st.set_page_config(page_title="Single Image Studio", layout="wide")
+
+from theme import apply_theme, condition_banner
+apply_theme()
+
 from src.vision.detector import RoadDamageDetector
 from src.ipcv.preprocessor import RoadImagePreprocessor
 from src.geo.geotag import get_location_with_fallback
 from src.database.db_manager import DatabaseManager
 from src.reporting.pdf_generator import generate_pdf_report
-
-st.set_page_config(page_title="Single Image Studio", layout="wide")
 
 # Initialize components
 @st.cache_resource
@@ -40,7 +47,8 @@ preprocessor = RoadImagePreprocessor()
 db = DatabaseManager()
 
 st.title("Single Road Image Inspection Studio")
-st.markdown("Upload a pavement photo to detect potholes and cracks with classical IPCV enhancement and AI analysis.")
+st.write("Upload a pavement photo to detect potholes and cracks with classical IPCV enhancement and AI analysis.")
+st.divider()
 
 # Sidebar settings
 st.sidebar.header("Inference Controls")
@@ -80,6 +88,7 @@ imgsz_map = {
 }
 selected_imgsz = imgsz_map[res_mode]
 
+st.sidebar.divider()
 st.sidebar.header("IPCV Image Processing")
 enable_clahe = st.sidebar.checkbox(
     "Enable CLAHE Contrast Equalization", 
@@ -155,16 +164,15 @@ if image_bgr is not None:
     cond = results["condition"]
     defects = results["defects"]
 
-    # Display Condition Banner
-    st.markdown("---")
-    cond_color = cond["color"]
-    st.markdown(f"""
-    <div style="background-color: {cond_color}; padding: 15px; border-radius: 10px; color: white; text-align: center; margin-bottom: 20px;">
-        <h2 style="margin: 0;">Road Condition Score: {cond['score']} / 100 ({cond['rating'].upper()})</h2>
-        <p style="margin: 5px 0 0 0; font-size: 1.1rem;">{cond['recommendation']}</p>
-        <small style="opacity: 0.9;">Total Defects: {results['total_defects']} | Engine: <b>{engine_mode}</b> | GPS: {lat:.5f}, {lon:.5f} {'(Real GPS)' if has_real_gps else '(Simulated GPS)'}</small>
-    </div>
-    """, unsafe_allow_html=True)
+    # Display Condition Banner in Asphalt Ochre Theme
+    st.divider()
+    meta_info = f"Total Defects: {results['total_defects']} | Engine: {engine_mode} | Location: {lat:.5f}, {lon:.5f}"
+    st.markdown(condition_banner(
+        cond['score'],
+        cond['rating'],
+        cond['recommendation'],
+        meta=meta_info
+    ), unsafe_allow_html=True)
 
     # Side-by-side original and annotated
     col_img1, col_img2 = st.columns(2)
@@ -178,7 +186,7 @@ if image_bgr is not None:
 
     # Defect crops gallery
     if defects:
-        st.markdown("### Detected Defect Gallery")
+        st.subheader("Detected Defect Gallery")
         cols = st.columns(min(len(defects), 4))
         for idx, d in enumerate(defects):
             with cols[idx % 4]:
@@ -186,16 +194,13 @@ if image_bgr is not None:
                 if crop_path and Path(crop_path).exists():
                     st.image(str(crop_path), use_container_width=True)
                 st.markdown(f"**{d['class_name']}**")
-                sev_badge = f"<span class='badge-{d['severity'].lower()}'>{d['severity']}</span>"
-                st.markdown(f"Severity: {sev_badge} ({d['confidence']*100:.1f}%)", unsafe_allow_html=True)
-                engine_badge = d.get("engine", "AI Model")
-                st.caption(f"Engine: **{engine_badge}** | Area: {d['area_ratio']:.4f}")
+                st.caption(f"Severity: **{d['severity']}** ({d['confidence']*100:.1f}%) | Area: {d.get('area_ratio', 0.0):.4f}")
     else:
         st.info("No road damage detected at the current confidence threshold.")
-        st.caption("*If this road has visible distress, try lowering the **Confidence Threshold** in the sidebar to 0.10 - 0.15, and ensure CLAHE is disabled.*")
+        st.caption("If this road has visible distress, try lowering the Confidence Threshold in the sidebar to 0.10 - 0.15, and ensure CLAHE is disabled.")
 
     # Actions: Save to Database & PDF Certificate
-    st.markdown("---")
+    st.divider()
     col_act1, col_act2 = st.columns(2)
     
     with col_act1:
@@ -235,12 +240,12 @@ if image_bgr is not None:
         
         generate_pdf_report(inspection_payload, defects, str(pdf_out_path))
         
-        with open(pdf_out_path, "rb") as f:
-            st.download_button(
-                label="Download Official PDF Audit Report",
-                data=f.read(),
-                file_name=f"Road_Inspection_{Path(img_name).stem}.pdf",
-                mime="application/pdf",
-                use_container_width=True
-            )
-
+        if pdf_out_path.exists():
+            with open(pdf_out_path, "rb") as f:
+                st.download_button(
+                    label="Download Official PDF Audit Report",
+                    data=f.read(),
+                    file_name=f"Road_Inspection_{Path(img_name).stem}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )

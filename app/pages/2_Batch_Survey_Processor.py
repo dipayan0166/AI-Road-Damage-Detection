@@ -1,16 +1,21 @@
 """
 Batch Survey Processor
 Upload multiple survey photos at once (e.g. 20-50 road inspection photos).
-Processes all images automatically, extracts GPS metadata, logs defects to SQLite,
+Processes all images automatically, logs defects to SQLite,
 and generates batch analytics and comprehensive per-image inspection reports.
+Asphalt Ochre (Dark) Theme Implementation
 """
 
 import sys
 from pathlib import Path
 
+# Add project root and app dir to path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
+APP_DIR = Path(__file__).resolve().parent.parent
+if str(APP_DIR) not in sys.path:
+    sys.path.insert(0, str(APP_DIR))
 
 import streamlit as st
 import cv2
@@ -18,14 +23,19 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 
+st.set_page_config(page_title="Batch Survey Processor", layout="wide")
+
+from theme import (
+    apply_theme,
+    condition_banner,
+    rating_cell_style
+)
+apply_theme()
+
 from src.vision.detector import RoadDamageDetector
 from src.geo.geotag import get_location_with_fallback
-from src.geo.map_builder import build_road_damage_map
 from src.database.db_manager import DatabaseManager
 from src.reporting.pdf_generator import generate_pdf_report
-from streamlit_folium import st_folium
-
-st.set_page_config(page_title="Batch Survey Processor", layout="wide")
 
 @st.cache_resource
 def load_detector():
@@ -48,7 +58,8 @@ if "batch_records" not in st.session_state:
     st.session_state["batch_records"] = []
 
 st.title("Batch Road Survey Processor")
-st.markdown("Upload multiple road survey images to process entire road stretches in batch mode and generate comprehensive inspection reports.")
+st.write("Upload multiple road survey images to process entire road stretches in batch mode and generate comprehensive inspection reports.")
+st.divider()
 
 st.sidebar.header("Batch Inference Controls")
 batch_engine = st.sidebar.selectbox(
@@ -198,7 +209,7 @@ if st.session_state["batch_processed_items"]:
     records = st.session_state["batch_records"]
 
     # 1. Executive Summary Cards
-    st.markdown("---")
+    st.divider()
     st.subheader("Survey Run Summary")
     m1, m2, m3, m4 = st.columns(4)
     m1.metric("Images Processed", summary["total_images"])
@@ -206,14 +217,8 @@ if st.session_state["batch_processed_items"]:
     m3.metric("Cracks Detected", summary["total_cracks"])
     m4.metric("Critical Hazards", summary["critical_count"])
 
-    # 2. Survey Route Damage Map
-    if records:
-        with st.expander("View Survey Route Damage Map", expanded=True):
-            batch_map = build_road_damage_map(records, zoom_start=13)
-            st_folium(batch_map, width=1200, height=450, key="batch_survey_map")
-
-    # 3. Comprehensive Batch Inspection Table
-    st.markdown("---")
+    # 2. Comprehensive Batch Inspection Table
+    st.divider()
     st.subheader(f"Inspection Reports Table ({len(items)} Survey Images)")
     
     table_rows = []
@@ -235,7 +240,10 @@ if st.session_state["batch_processed_items"]:
         })
     
     df_batch = pd.DataFrame(table_rows)
-    st.dataframe(df_batch, use_container_width=True)
+    try:
+        st.dataframe(df_batch.style.map(rating_cell_style, subset=["Rating"]), use_container_width=True, hide_index=True)
+    except AttributeError:
+        st.dataframe(df_batch.style.applymap(rating_cell_style, subset=["Rating"]), use_container_width=True, hide_index=True)
 
     # Export CSV
     csv_bytes = df_batch.to_csv(index=False).encode("utf-8")
@@ -247,13 +255,12 @@ if st.session_state["batch_processed_items"]:
         use_container_width=True
     )
 
-    # 4. Individual Image Inspection Reports Gallery
-    st.markdown("---")
+    # 3. Individual Image Inspection Reports Gallery
+    st.divider()
     st.subheader(f"Detailed Image Inspection Reports ({len(items)} Photos)")
     st.caption("Inspect individual survey photos with side-by-side original and AI-detected distress visuals, defect details, and audit certificates.")
 
     for idx, item in enumerate(items, 1):
-        rating_color = item.get("color", "#2ECC71")
         card_label = f"Photo #{idx}: {item['image_name']}  |  Road Condition: {item['condition_score']:.0f}/100 ({item['rating'].upper()})  |  Defects: {item['total_defects']}"
         
         with st.expander(card_label, expanded=(idx <= 3)):
@@ -269,30 +276,27 @@ if st.session_state["batch_processed_items"]:
                         st.image(item["original_path"], use_container_width=True)
 
             with col_info:
-                st.markdown(f"""
-                <div style="background-color: {rating_color}; padding: 12px; border-radius: 8px; color: white; text-align: center; margin-bottom: 15px;">
-                    <h3 style="margin: 0; font-size: 1.4rem;">Road Condition: {item['condition_score']:.0f} / 100</h3>
-                    <b>Rating: {item['rating'].upper()}</b>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                st.markdown(f"**Action Recommendation**: {item['recommendation']}")
                 gps_str = f"{item['latitude']:.5f}, {item['longitude']:.5f}"
                 gps_tag = "(Real EXIF GPS)" if item.get("has_real_gps") else "(Simulated GPS)"
-                st.caption(f"Location: {gps_str} {gps_tag}")
+                meta_str = f"Location: {gps_str} {gps_tag}"
                 
-                st.markdown("---")
+                st.markdown(condition_banner(
+                    item['condition_score'],
+                    item['rating'],
+                    item['recommendation'],
+                    meta=meta_str
+                ), unsafe_allow_html=True)
+                
+                st.divider()
                 if item["defects"]:
                     st.markdown("**Detected Distress Details:**")
                     for d in item["defects"]:
-                        sev_color = "#E74C3C" if d["severity"] == "Critical" else ("#F39C12" if d["severity"] == "Moderate" else "#27AE60")
-                        badge_html = f"<span style='background-color: {sev_color}; color: white; padding: 2px 7px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;'>{d['severity']}</span>"
                         engine_badge = d.get("engine", "AI Model")
-                        st.markdown(f"• **{d['class_name']}** {badge_html} (Conf: {d['confidence']*100:.1f}%) <small>via {engine_badge}</small>", unsafe_allow_html=True)
+                        st.markdown(f"• **{d['class_name']}** — Severity: **{d['severity']}** ({d['confidence']*100:.1f}%) <small>via {engine_badge}</small>", unsafe_allow_html=True)
                 else:
                     st.success("Pavement in this section is clear of significant distress.")
 
-                st.markdown("---")
+                st.divider()
                 # PDF Certificate Generation
                 pdf_out = PROJECT_ROOT / "data" / "temp_batch" / f"Audit_Certificate_{Path(item['image_name']).stem}.pdf"
                 inspection_payload = {

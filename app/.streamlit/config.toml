@@ -1,0 +1,15 @@
+# Asphalt Ochre (dark) - native Streamlit theme.
+# Copy this file to <your-project>/.streamlit/config.toml
+# (if you already have one, merge the [theme] block into it).
+#
+# These values colour the widgets Streamlit draws itself (sliders, radios,
+# inputs, the dataframe grid). theme.py adds fonts, cards, banners and the
+# matplotlib chart style on top.
+
+[theme]
+base = "dark"
+primaryColor = "#D2A24C"              # ochre accent: sliders, radios, checkboxes, focus rings
+backgroundColor = "#121315"           # warm charcoal page
+secondaryBackgroundColor = "#191A1D"  # card colour: inputs, dataframe, uploader (sidebar is darkened by theme.py)
+textColor = "#ECEDEF"
+font = "sans serif"                   # Inter and Newsreader are applied on top by theme.py
