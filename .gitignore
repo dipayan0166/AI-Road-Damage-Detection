@@ -23,6 +23,18 @@ runs/
 models/pretrained/rdd2022_global.pt
 *.onnx
 
+# Local Reports, Documents, Posters & Presentation Slides (Kept locally on PC only)
+HOW_THIS_PROJECT_WAS_MADE_STEP_BY_STEP.*
+IPCV_Poster_*
+MASTER_PROJECT_REPORT*
+OVERVIEW.md
+POSTER_PRESENTATION_SCRIPT.*
+PRESENTATION_SLIDES*
+PROJECT_OVERVIEW.pdf
+PROJECT_POSTER.*
+PROJECT_REPORT.*
+VIVA_DEFENSE_GUIDE.md
+
 # Temporary, Scratch & Lock Files
 ~$*.pptx
 ~$*.docx
