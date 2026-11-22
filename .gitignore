@@ -1,0 +1,40 @@
+# Python Environment & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+env/
+venv/
+ENV/
+
+# Large Datasets & Bulk Images (Train & Val splits)
+data/raw/
+data/processed/images/train/
+data/processed/images/val/
+data/temp/
+data/temp_batch/
+*.zip
+*.tar.gz
+
+# Large Checkpoints & Heavy Model Runs
+runs/
+models/pretrained/rdd2022_global.pt
+*.onnx
+
+# Temporary, Scratch & Lock Files
+~$*.pptx
+~$*.docx
+*.tmp
+test_shd.docx
+ERR*.png
+scr*.png
+template_rendered.png
+ERROR/
+
+# IDE & OS Files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

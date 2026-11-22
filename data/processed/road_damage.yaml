@@ -1,0 +1,13 @@
+# Ultralytics YOLO11 Dataset Configuration
+# Smart Road Damage Detection System (RDD2022 India Subset)
+
+path: C:/Users/dipay/Desktop/IPCV PROJECT/data/processed
+train: images/train
+val: images/val
+test: images/test
+
+names:
+  0: D00_Longitudinal_Crack
+  1: D10_Transverse_Crack
+  2: D20_Alligator_Crack
+  3: D40_Pothole

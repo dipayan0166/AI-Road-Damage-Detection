@@ -1,0 +1,70 @@
+/* Modern IPCV Smart Road Inspection Dashboard Styling */
+
+/* Main Container */
+.main .block-container {
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+    max-width: 95%;
+}
+
+/* Metric Cards */
+.metric-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    border-left: 5px solid #1B4F72;
+    margin-bottom: 15px;
+}
+
+.metric-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.metric-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #212529;
+}
+
+/* Severity Badges */
+.badge-critical {
+    background-color: #E74C3C;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.badge-moderate {
+    background-color: #F39C12;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.badge-minor {
+    background-color: #2ECC71;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+/* Condition Score Header */
+.condition-card {
+    border-radius: 12px;
+    padding: 18px;
+    color: white;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
